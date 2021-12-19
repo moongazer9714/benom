@@ -3,6 +3,8 @@ from typing_extensions import Required
 from django.db import models
 from django.contrib.auth.base_user import BaseUserManager
 from django.contrib.auth.models import AbstractBaseUser, AbstractUser
+from django.db.models.base import Model
+from django.db.models.fields import proxy
 from django.utils.translation import gettext_lazy as _
 from phonenumber_field.modelfields import PhoneNumberField
 
@@ -109,3 +111,97 @@ class CustomMore(models.Model):
         verbose_name = 'Customer Extra Field'
 
 
+class Customer(User):
+    base_type = User.Types.CUSTOMER
+    objects = CustomManager
+    @property
+
+    def more(self):
+        return self.customermore
+
+    def __str__(self):
+        return self.get_full_name() or self.username
+
+    class Meta:
+        proxy = True
+
+    
+class SellerMore(models.Model):
+    user = models.OneToOneField(User, on_delete=models.PROTECT)
+    company_name = models.CharField(max_length=64, verbose_name="Seller's company name")
+    image = models.ImageField(verbose_name='Image of seller', upload_to='image/seller/', null=True, blank=True)
+    
+    def __str__(self):
+        return f"{self.user.username}'s extra fields"
+
+    class Meta:
+        verbose_name_plural = 'Sellers\Extra Fields'
+        verbose_name = 'Seller\Extra Field'
+
+
+class Seller(User):
+    base_type = User.Types.SELLER
+    objects = SellerManager()
+    
+    @property
+    def more(self):
+        return self.sellermore
+
+    class Meta:
+        proxy = True
+
+    def get_phone_number(self):
+        return self.more.company_name
+
+    def __str__(self):
+        return self.get_full_name() or self.username
+
+
+class ModeratorMore(models.Model):
+    user = models.OneToOneField(User, on_delete=models.PROTECT)
+    
+    def __str__(self):
+        return f"{self.user.username}'s extra fields"
+
+    class Meta:
+        verbose_name_plural = 'Moderators\Extra Fields'
+        verbose_name = 'Moderator\Extra Field'
+
+
+class Moderator(User):
+    base_type = User.Types.MODERATOR
+    objects = ModeratorManager()
+
+    @property
+    def more(self):
+        return self.moderatormore
+
+    class Meta:
+        proxy = True
+    
+
+class AdminMore(models.Model):
+    user = models.OneToOneField(User, on_delete=models.PROTECT)
+
+    class Meta:
+        verbose_name_plural = 'Admin'
+        verbose_name = 'Admin'
+
+    def __str__(self):
+        return f"{self.user.username}'s extra fields"
+    
+    class Meta:
+        verbose_name_plural = 'Admins\Extra Fields'
+        verbose_name = 'Admin\Extra Field'
+
+
+class Admin(User):
+    base_type = User.Types.ADMIN
+    objects = AdminManager()
+
+    @property
+    def more(self):
+        return self.adminmore
+
+    class Meta:
+        proxy = True
